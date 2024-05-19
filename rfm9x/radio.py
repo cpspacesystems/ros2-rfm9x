@@ -42,7 +42,7 @@ class MinimalSubscriber(Node):
         return (lambda msg: self.listener_callback(msg, topic, prop, label))
 
     def listener_callback(self, msg, topic, prop, label):
-        # self.radio.send(bytes(str(msg.linear_acceleration.z),"utf-8"))
+        self.radio.send(bytes(label + ' [' + topic + ']: ' + eval(prop),"utf-8"))
         self.get_logger().info(label + ' [' + topic + ']: %s' % eval(prop))
 
 
