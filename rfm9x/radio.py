@@ -17,21 +17,33 @@ spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 class MinimalSubscriber(Node):
 
     def __init__(self, radio):
-        super().__init__('minimal_subscriber')
+        super().__init__('radio')
+
+        self.declare_parameter('topics', '')
+        self.declare_parameter('props', '')
+        self.declare_parameter('labels', '')
+        self.declare_parameter('types', '')
 
         # Set up radio
         self.radio = radio
 
-        self.subscription = self.create_subscription(
-            Imu,
-            'imu2',
-            self.listener_callback,
-            10)
-        self.subscription  # prevent unused variable warning
+        self.topics = self.get_parameter('topics').get_parameter_value().string_value.split(';')
+        self.props = self.get_parameter('props').get_parameter_value().string_value.split(';')
+        self.labels = self.get_parameter('labels').get_parameter_value().string_value.split(';')
+        self.types = self.get_parameter('types').get_parameter_value().string_value.split(';')
 
-    def listener_callback(self, msg):
-        self.radio.send(bytes(str(msg.linear_acceleration.z),"utf-8"))
-        self.get_logger().info('Z_accel: %s' % str(msg.linear_acceleration.z))
+        self.subscribers = [self.create_subscription(
+            eval(type),
+            topic,
+            self.build_callback(topic, prop, label),
+            10) for (topic, prop, label, type) in zip(self.topics, self.props, self.labels, self.types)]
+
+    def build_callback(self, topic, prop, label):
+        return (lambda msg: self.listener_callback(msg, topic, prop, label))
+
+    def listener_callback(self, msg, topic, prop, label):
+        # self.radio.send(bytes(str(msg.linear_acceleration.z),"utf-8"))
+        self.get_logger().info(label + ' [' + topic + ']: %s' % eval(prop))
 
 
 def main(args=None):
