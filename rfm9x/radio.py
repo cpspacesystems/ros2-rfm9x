@@ -39,27 +39,30 @@ class Radio(Node):
         self.radio.tx_power = 23
         self.node = node_id
 
-        # Set up ROS Subscribers
+        # Get list of topics
         self.topics = self.get_parameter('topics').get_parameter_value().string_value.split(';')
         self.types = self.get_parameter('types').get_parameter_value().string_value.split(';')
 
         self.get_logger().info("INIT: %s" % [i for i in zip(self.topics, self.types)])
 
-        self.subscribers = [self.create_subscription(
-            eval(type),
-            topic,
-            self.build_callback(topic, type),
-            10) for (topic, type) in zip(self.topics, self.types)]
-
-        # Set up LoRa Message Interrupt
+        # Check if we are receiving or sending
         pin_irq = self.get_parameter('pin_irq').get_parameter_value().string_value
         if pin_irq != "":
+            # Set up LoRa Message Interrupt
             pin_irq = int(pin_irq)
             self.irq = io.Button(pin_irq)
             self.irq.when_pressed = self.on_receive
             self.packet_received = False
 
             self.timer = self.create_timer(0.02, self.loop)
+        else:
+            # Set up ROS Subscribers
+            self.subscribers = [self.create_subscription(
+                eval(type),
+                topic,
+                self.build_callback(topic, type),
+                10) for (topic, type) in zip(self.topics, self.types)]
+
 
     def loop(self):
         if self.packet_received:

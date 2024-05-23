@@ -11,11 +11,11 @@ def generate_launch_description():
             emulate_tty=True,
             parameters=[
                 {'node_id': '40'},
-                {'pin_cs': 'ground.CE0'},
-                {'pin_rst': 'ground.D26'},
-                {'topics': 'imu2/raw'},
+                {'pin_cs': 'board.CE1'},
+                {'pin_rst': 'board.D13'},
+                {'topics': 'imu1/raw'},
                 {'types': 'Imu'},
-                {'pin_irq': 'ground.D6'}
+                {'pin_irq': '5'}
             ]
         )
     ])

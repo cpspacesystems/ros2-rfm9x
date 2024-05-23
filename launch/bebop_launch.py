@@ -21,8 +21,8 @@ def generate_launch_description():
                 {'node_id': '42'},
                 {'pin_cs': 'board.CE1'},
                 {'pin_rst': 'board.D13'},
-                {'topics': 'imu0/raw;imu1/raw;imu2/raw'},
-                {'types': 'Imu;Imu;Imu'}
+                {'topics': 'imu1/raw'},
+                {'types': 'Imu'}
             ]
         )
     ])
