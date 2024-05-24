@@ -10,19 +10,15 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True,
             parameters=[
-#                {'node_id': '42'},
-#                {'pin_cs': 'board.CE1'},
-#                {'pin_rst': 'board.D13'},
-#                {'topics': 'imu3;imu2;imu1'},
-#                {'props': '"X="+str(msg.linear_acceleration.x)+", Y="+str(msg.linear_acceleration.y)+", Z="+str(msg.linear_acceleration.z);"X="+str(msg.linear_acceleration.x)+", Y="+str(msg.linear_acceleration.y)+", Z="+str(msg.linear_acceleration.z);str(msg.linear_acceleration.z)'},
-#                {'labels': 'LimAcc;LinAcc;Zero'},
-#                {'types': 'Imu;Imu;Imu'}
-
-                {'node_id': '42'},
-                {'pin_cs': 'board.CE1'},
-                {'pin_rst': 'board.D13'},
-                {'topics': 'imu1/raw'},
-                {'types': 'Imu'}
+                {'lora_topics_sub': '/imu1/raw'},
+                {'lora_topics_pub': ''},
+                {'message_types_sub': 'sensor_msgs/Imu'},
+                {'message_types_pub': ''},
+                {'spi_sck': 'SCK'},
+                {'spi_mosi': 'MOSI'},
+                {'spi_miso': 'MISO'},
+                {'spi_cs': 'CE1'},
+                {'spi_reset': 'D13'}
             ]
         )
     ])
