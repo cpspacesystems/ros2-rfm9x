@@ -91,7 +91,7 @@ class Radio(Node):
         compressed_payload = gzip.compress(payload)
 
         if compressed_payload:
-            self.get_logger().info(f"Sending [{topic_name}]: {msg}")
+            self.get_logger().debug(f"Sending [{topic_name}]: {msg}")
             self.rfm9x.send(compressed_payload)
 
     def lora_rx_callback(self):
@@ -115,7 +115,7 @@ class Radio(Node):
                     publisher = self.pubs[topic_name]
 
                     if deserialized_msg:
-                        self.get_logger().info(f"Received [{topic_name}]: {deserialized_msg}")
+                        self.get_logger().debug(f"Received [{topic_name}]: {deserialized_msg}")
                         publisher.publish(deserialized_msg)
 
 
