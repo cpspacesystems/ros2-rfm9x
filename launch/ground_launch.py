@@ -10,12 +10,16 @@ def generate_launch_description():
             output='screen',
             emulate_tty=True,
             parameters=[
-                {'node_id': '40'},
-                {'pin_cs': 'board.CE1'},
-                {'pin_rst': 'board.D13'},
-                {'topics': 'imu1/raw'},
-                {'types': 'Imu'},
-                {'pin_irq': '5'}
+                {'lora_topics_pub': '/imu1/raw'},
+                {'lora_topics_sub': ''},
+                {'message_types_pub': 'sensor_msgs/Imu'},
+                {'message_types_sub': ''},
+                {'spi_sck': 'SCK'},
+                {'spi_mosi': 'MOSI'},
+                {'spi_miso': 'MISO'},
+                {'spi_cs': 'CE1'},
+                {'spi_reset': 'D27'},
+                {'irq_pin': '17'}
             ]
         )
     ])

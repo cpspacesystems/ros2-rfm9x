@@ -18,7 +18,8 @@ def generate_launch_description():
                 {'spi_mosi': 'MOSI'},
                 {'spi_miso': 'MISO'},
                 {'spi_cs': 'CE1'},
-                {'spi_reset': 'D13'}
+                {'spi_reset': 'D13'},
+                {'irq_pin': '5'}
             ]
         )
     ])
