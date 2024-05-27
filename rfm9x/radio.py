@@ -16,10 +16,13 @@ class Radio(Node):
         super().__init__('radio')
 
         # Declare parameters
-        self.declare_parameter('lora_topics_sub', '')
-        self.declare_parameter('lora_topics_pub', '')
-        self.declare_parameter('message_types_sub', '')
-        self.declare_parameter('message_types_pub', '')
+        self.declare_parameter('node_id', 255)
+        self.declare_parameter('dest_id', 255)
+        self.declare_parameter('tx_pwr', 13)
+        self.declare_parameter('topics_sub', '')
+        self.declare_parameter('topics_pub', '')
+        self.declare_parameter('msg_types_sub', '')
+        self.declare_parameter('msg_types_pub', '')
         self.declare_parameter('spi_sck', 'SCK')
         self.declare_parameter('spi_mosi', 'MOSI')
         self.declare_parameter('spi_miso', 'MISO')
@@ -28,10 +31,13 @@ class Radio(Node):
         self.declare_parameter('irq_pin', '5')
 
         # Get parameters
-        self.lora_topics_sub = list(filter(None, self.get_parameter('lora_topics_sub').get_parameter_value().string_value.split(',')))
-        self.lora_topics_pub = list(filter(None, self.get_parameter('lora_topics_pub').get_parameter_value().string_value.split(',')))
-        self.message_types_sub = list(filter(None, self.get_parameter('message_types_sub').get_parameter_value().string_value.split(',')))
-        self.message_types_pub = list(filter(None, self.get_parameter('message_types_pub').get_parameter_value().string_value.split(',')))
+        self.node_id = self.get_parameter('node_id').get_parameter_value().integer_value
+        self.dest_id = self.get_parameter('dest_id').get_parameter_value().integer_value
+        self.tx_pwr = self.get_parameter('tx_pwr').get_parameter_value().integer_value
+        self.lora_topics_sub = list(filter(None, self.get_parameter('topics_sub').get_parameter_value().string_value.split(',')))
+        self.lora_topics_pub = list(filter(None, self.get_parameter('topics_pub').get_parameter_value().string_value.split(',')))
+        self.message_types_sub = list(filter(None, self.get_parameter('msg_types_sub').get_parameter_value().string_value.split(',')))
+        self.message_types_pub = list(filter(None, self.get_parameter('msg_types_pub').get_parameter_value().string_value.split(',')))
         self.spi_sck = self.get_parameter('spi_sck').get_parameter_value().string_value
         self.spi_mosi = self.get_parameter('spi_mosi').get_parameter_value().string_value
         self.spi_miso = self.get_parameter('spi_miso').get_parameter_value().string_value
@@ -44,8 +50,12 @@ class Radio(Node):
         self.cs = digitalio.DigitalInOut(getattr(board, self.spi_cs))
         self.reset = digitalio.DigitalInOut(getattr(board, self.spi_reset))
         self.rfm9x = adafruit_rfm9x.RFM9x(self.spi, self.cs, self.reset, 915.0)
+        self.rfm9x.tx_power = self.tx_pwr
+        self.rfm9x.node = self.node_id
+        self.rfm9x.destination = self.dest_id
 
-        self.get_logger().info(f"Initializing radio (SPI:[CK:{self.spi_sck} MO:{self.spi_mosi} MI:{self.spi_miso}] CS:{self.spi_cs} RST:{self.spi_reset}")
+
+        self.get_logger().info(f"Initializing radio (SPI:[CK:{self.spi_sck} MO:{self.spi_mosi} MI:{self.spi_miso}] CS:{self.spi_cs} RST:{self.spi_reset} PWR:{self.tx_pwr} NODE:{self.node_id} DST:{self.dest_id}")
 
         # Create subscription and publisher for each topic with appropriate message type
         self.subs = []
@@ -74,7 +84,7 @@ class Radio(Node):
             self.get_logger().info("Receiving and publishing the following topics: %s" % list(self.topic_type_map.keys()))
 
         # Create timer for periodic receiving
-        self.timer = self.create_timer(0.02, self.lora_rx_callback)
+        self.timer = self.create_timer(0.05, self.lora_rx_callback)
 
         self.get_logger().info("Done Initializing!")
 
