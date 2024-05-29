@@ -19,10 +19,10 @@ class Radio(Node):
         self.declare_parameter('node_id', 255)
         self.declare_parameter('dest_id', 255)
         self.declare_parameter('tx_pwr', 13)
-        self.declare_parameter('topics_sub', '')
-        self.declare_parameter('topics_pub', '')
-        self.declare_parameter('msg_types_sub', '')
-        self.declare_parameter('msg_types_pub', '')
+        self.declare_parameter('topics_sub', rclpy.Parameter.Type.STRING_ARRAY)
+        self.declare_parameter('topics_pub', rclpy.Parameter.Type.STRING_ARRAY)
+        self.declare_parameter('msg_types_sub', rclpy.Parameter.Type.STRING_ARRAY)
+        self.declare_parameter('msg_types_pub', rclpy.Parameter.Type.STRING_ARRAY)
         self.declare_parameter('spi_sck', 'SCK')
         self.declare_parameter('spi_mosi', 'MOSI')
         self.declare_parameter('spi_miso', 'MISO')
@@ -34,10 +34,10 @@ class Radio(Node):
         self.node_id = self.get_parameter('node_id').get_parameter_value().integer_value
         self.dest_id = self.get_parameter('dest_id').get_parameter_value().integer_value
         self.tx_pwr = self.get_parameter('tx_pwr').get_parameter_value().integer_value
-        self.lora_topics_sub = list(filter(None, self.get_parameter('topics_sub').get_parameter_value().string_value.split(',')))
-        self.lora_topics_pub = list(filter(None, self.get_parameter('topics_pub').get_parameter_value().string_value.split(',')))
-        self.message_types_sub = list(filter(None, self.get_parameter('msg_types_sub').get_parameter_value().string_value.split(',')))
-        self.message_types_pub = list(filter(None, self.get_parameter('msg_types_pub').get_parameter_value().string_value.split(',')))
+        self.lora_topics_sub = self.get_parameter('topics_sub').get_parameter_value().string_array_value
+        self.lora_topics_pub = self.get_parameter('topics_pub').get_parameter_value().string_array_value
+        self.message_types_sub = self.get_parameter('msg_types_sub').get_parameter_value().string_array_value
+        self.message_types_pub = self.get_parameter('msg_types_pub').get_parameter_value().string_array_value
         self.spi_sck = self.get_parameter('spi_sck').get_parameter_value().string_value
         self.spi_mosi = self.get_parameter('spi_mosi').get_parameter_value().string_value
         self.spi_miso = self.get_parameter('spi_miso').get_parameter_value().string_value
@@ -58,7 +58,7 @@ class Radio(Node):
         self.get_logger().info(f"Initializing radio (SPI:[CK:{self.spi_sck} MO:{self.spi_mosi} MI:{self.spi_miso}] CS:{self.spi_cs} RST:{self.spi_reset} PWR:{self.tx_pwr} NODE:{self.node_id} DST:{self.dest_id}")
 
         # Create subscription and publisher for each topic with appropriate message type
-        self.subs = []
+        self.subs = {}
         self.pubs = {}
         self.topic_type_map = {}
 
@@ -66,25 +66,25 @@ class Radio(Node):
             package_name, message_name = self.message_types_sub[i].split('/')
             msg_module = importlib.import_module(f"{package_name}.msg")
             msg_class = getattr(msg_module, message_name)
-            subscription = self.create_subscription(msg_class, topic, (lambda msg: self.sub_callback(msg, topic)), 10)
-            self.subs.append(subscription)
+            subscription = self.create_subscription(msg_class, topic, (lambda msg, t=topic: self.sub_callback(msg, t)), 10)
+            self.subs[topic] = subscription
 
-        if self.lora_topics_sub != []:
+        if len(self.lora_topics_sub) > 0:
             self.get_logger().info("Subscribing and sending the following topics: %s" % self.lora_topics_sub)
 
-        for i, topic in enumerate(self.lora_topics_pub):
-            package_name, message_name = self.message_types_pub[i].split('/')
+        for j, ptopic in enumerate(self.lora_topics_pub):
+            package_name, message_name = self.message_types_pub[j].split('/')
             msg_module = importlib.import_module(f"{package_name}.msg")
             msg_class = getattr(msg_module, message_name)
-            self.topic_type_map[topic] = msg_class
-            publisher = self.create_publisher(msg_class, topic, 10)
-            self.pubs[topic] = publisher
+            self.topic_type_map[ptopic] = msg_class
+            publisher = self.create_publisher(msg_class, ptopic, 10)
+            self.pubs[ptopic] = publisher
 
         if len(self.lora_topics_pub) > 0:
             self.get_logger().info("Receiving and publishing the following topics: %s" % list(self.topic_type_map.keys()))
 
         # Create timer for periodic receiving
-        self.timer = self.create_timer(0.05, self.lora_rx_callback)
+        self.timer = self.create_timer(0.1, self.lora_rx_callback)
 
         self.get_logger().info("Done Initializing!")
 
@@ -102,7 +102,7 @@ class Radio(Node):
 
         if compressed_payload:
             self.get_logger().debug(f"Sending [{topic_name}]: {msg}")
-            self.rfm9x.send(compressed_payload)
+            self.rfm9x.send(compressed_payload, keep_listening=True)
 
     def lora_rx_callback(self):
         if self.rfm9x.rx_done:
